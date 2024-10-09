@@ -19,8 +19,8 @@ Dự án này bao gồm các phần sau:
 Tạo 1 folder chứa file project sau đó bật git bash:
 Chuột phải vào folder > Show more option > Git Bash here
 ```sh
-git clone https://github.com/jnp2018/mid-project-801.git
-cd mid-project-801
+git clone https://github.com/jnp2018/801277361.git
+cd mid-project-801277361
 
 • Dùng git status để kiểm tra từng bước.
 1. Trước khi bắt đầu làm task, checkout trở về nhánh main để pull. Chạy lệnh:
