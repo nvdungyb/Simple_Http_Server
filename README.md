@@ -8,9 +8,8 @@ Hoàng Gia Vương - B21DCCN801
 ## Mô tả
 
 Dự án này bao gồm các phần sau:
-    + Server hỗ trợ các thức: HTTP/1.1 và HTTP/2
     
-- Viết file README.md
+- Server hỗ trợ các giao thức: HTTP/1.1 và HTTP/2
 
 ## Cài đặt
 
