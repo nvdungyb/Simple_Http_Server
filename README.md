@@ -1,13 +1,17 @@
 # mid-project-801277361
 
 Đây là dự án giữa kỳ, chủ đề: HTTP server.
+<br>
 Thành viên:
 Nguyễn Văn Dũng - B21DCCN277
 Nguyễn Đức Hiếu - B21DCCN361
 Hoàng Gia Vương - B21DCCN801
+
 ## Mô tả
 
 Dự án này bao gồm các phần sau:
+<br>Server nhận request từ client, xử lý và response.
+<br>Công nghệ: Java
     
 - Server hỗ trợ các giao thức: HTTP/1.1 và HTTP/2
 
