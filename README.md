@@ -1,11 +1,12 @@
-# mid-project-801
+# mid-project-801277361
 
-Đây là dự án giữa kỳ 801.
+Đây là dự án giữa kỳ, chủ đề: HTTP server.
 
 ## Mô tả
 
 Dự án này bao gồm các phần sau:
-
+    + Server hỗ trợ các thức: HTTP/1.1 và HTTP/2
+    
 - Viết file README.md
 
 ## Cài đặt
