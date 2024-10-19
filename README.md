@@ -4,17 +4,19 @@
 <br>
 
 **Thành viên:**
+
 - Nguyễn Văn Dũng - B21DCCN277
 - Nguyễn Đức Hiếu - B21DCCN361
 - Hoàng Gia Vương - B21DCCN801
 
 ## Mô tả
+
 - Server nhận request từ client, xử lý và response.
 
-###  Dự án này bao gồm các phần sau:
+### Dự án này bao gồm các phần sau:
+
 - Server hỗ trợ các giao thức: HTTP/1.1 và HTTP/2
 - Công nghệ: Java
-
 
 ## Tiến độ
 
@@ -25,6 +27,8 @@
   <ul>
       <li>Xử lý đa luồng</li>
       <li>Đọc file cấu hình Json</li>
+      <li>Phân tích Http request và gửi Http response</li>
+      <li>Cho phép Upload tài nguyên lên server</li>
   </ul>
 
 ## Cài đặt
