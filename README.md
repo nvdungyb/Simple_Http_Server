@@ -37,6 +37,7 @@
 - **Công việc đã làm:**
     <ul>
         <li>Tìm hiểu redis, và cài đặt redis server</li>
+        <li>Cache thành công tài nguyên, giảm thời gian đọc file từ ổ đĩa.</li>
     </ul>
 
 ## Cài đặt
