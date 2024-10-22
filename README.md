@@ -31,6 +31,14 @@
       <li>Cho phép Upload tài nguyên lên server</li>
   </ul>
 
+
+### Tuần 2
+- **Mục tiêu:** Thực hiện caching tài nguyên.
+- **Công việc đã làm:**
+    <ul>
+        <li>Tìm hiểu redis, và cài đặt redis server</li>
+    </ul>
+
 ## Cài đặt
 
 Để cài đặt dự án, làm theo các bước sau:
