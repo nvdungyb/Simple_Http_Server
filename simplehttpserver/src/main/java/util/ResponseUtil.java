@@ -33,7 +33,7 @@ public class ResponseUtil {
         }
     }
 
-    private static String getFileExtension(String target) {
+    public static String getFileExtension(String target) {
         int lastIndexOfDot = target.lastIndexOf('.');
         return target.substring(lastIndexOfDot + 1);
     }

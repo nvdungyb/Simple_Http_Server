@@ -3,6 +3,7 @@ package writer;
 import config.HttpConfigurationAndResources;
 import http1.HttpMethod;
 import http1.HttpRequest;
+import redis.RedisService;
 import util.Json;
 import util.ObjectResponse;
 import util.ResponseUtil;
@@ -22,9 +23,33 @@ public class ResponseWriter {
             HttpMethod method = request.getMethod();
             String requestTarget = request.getRequestTarget().substring(1);
             if (!requestTarget.equals("favicon.ico")) {
-                ObjectResponse objectResponse = ResponseUtil.readFile(requestTarget, configurationAndResources.getTargetResources());
-                String fileExtension = objectResponse.getFileExtension();
-                byte[] data = objectResponse.getByteArrayOutputStream().toByteArray();
+                byte[] data = null;
+                String fileExtension = null;
+
+                /// Cần refactor lại code.
+                // Kiểm tra requestTarget được truy cập nhiều hay không?
+                RedisService redisService = new RedisService();
+                int numbersRequestToTarget = redisService.getNumberRequest(requestTarget);
+                if (numbersRequestToTarget >= 2) {
+                    data = redisService.getBytesValue(requestTarget);
+                    fileExtension = ResponseUtil.getFileExtension(configurationAndResources.getTargetResources().getResources().get(requestTarget));
+                } else {
+                    ObjectResponse objectResponse = ResponseUtil.readFile(requestTarget, configurationAndResources.getTargetResources());
+                    fileExtension = objectResponse.getFileExtension();
+                    data = objectResponse.getByteArrayOutputStream().toByteArray();
+                }
+
+                // Parallel
+                byte[] finalData = data;
+                Thread thead = new Thread(() -> {
+                    if (numbersRequestToTarget == 0) {
+                        redisService.setBytesValue(requestTarget, finalData);
+                        System.out.println("Thanh cong");
+                    }
+                    redisService.increaseValue("number:" + requestTarget);
+                    System.out.println("Lưu " + requestTarget);
+                });
+                thead.start();
 
                 String contentType = null;
                 if (method.name().equals(HttpMethod.GET.name())) {
@@ -50,12 +75,9 @@ public class ResponseWriter {
                     }
                 }
 
-                if (contentType == null)
-                    contentType = "Content-Type: text/html";
+                if (contentType == null) contentType = "Content-Type: text/html";
 
-                String responseHeader = "HTTP/1.1 200 OK" + CRLF +
-                        contentType + CRLF
-                        + "Content-Length: " + data.length + CRLF + CRLF;
+                String responseHeader = "HTTP/1.1 200 OK" + CRLF + contentType + CRLF + "Content-Length: " + data.length + CRLF + CRLF;
 
                 outputStream.write(responseHeader.getBytes());
                 outputStream.write(data);
