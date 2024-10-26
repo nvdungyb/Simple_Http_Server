@@ -29,8 +29,15 @@ public class ResponseWriter {
 
                 /// Need to refactor this code
                 // Get data from redis server if it is cached.
-                RedisService redisService = new RedisService();
-                int numbersRequestToTarget = redisService.getNumberRequest(requestTarget);
+                int numbersRequestToTarget = 0;
+                RedisService redisService = null;
+                boolean isRedisConnected = true;
+                try {
+                    redisService = new RedisService();
+                    numbersRequestToTarget = redisService.getNumberRequest(requestTarget);
+                } catch (Exception e) {                                     // In case: can not connect to redis server.
+                    isRedisConnected = false;
+                }
                 if (numbersRequestToTarget > NUMBER_REQUEST_TO_CACHE) {                                   // This resource is cached.
                     data = redisService.getBytesValue(requestTarget);
                     fileExtension = ResponseUtil.getFileExtension(configurationAndResources.getTargetResources().getResources().get(requestTarget));
@@ -41,7 +48,9 @@ public class ResponseWriter {
                     data = objectResponse.getByteArrayOutputStream().toByteArray();
                 }
 
-                cacheResource(data, numbersRequestToTarget, redisService, requestTarget);
+                if (isRedisConnected) {
+                    cacheResource(data, numbersRequestToTarget, redisService, requestTarget);
+                }
 
                 String contentType = null;
                 if (method.name().equals(HttpMethod.GET.name())) {
@@ -90,13 +99,15 @@ public class ResponseWriter {
     }
 
     private static void cacheResource(byte[] data, int numbersRequestToTarget, RedisService redisService, String requestTarget) {
+        if (redisService == null) return;
+
         // parallel cache resource to reduce response time.
         byte[] finalData = data;
         Thread thead = new Thread(() -> {
             if (numbersRequestToTarget == NUMBER_REQUEST_TO_CACHE) {
                 redisService.setBytesValue(requestTarget, finalData);
                 System.out.println("Cached resource successfully");
-            }else if(numbersRequestToTarget > NUMBER_REQUEST_TO_CACHE){
+            } else if (numbersRequestToTarget > NUMBER_REQUEST_TO_CACHE) {
                 redisService.setExpireKey(requestTarget);
             }
             redisService.increaseValue(requestTarget);
