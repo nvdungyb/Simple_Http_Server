@@ -12,18 +12,17 @@ public class RedisService {
         this.redisConnection = RedisConnection.getInstance();
     }
 
-    public void setStrValue(String key, String value) {
-        redisConnection.set(key, value);
-        redisConnection.expire(key, 60);
-    }
-
     public void increaseValue(String key) {
-        redisConnection.incr(key);
-        redisConnection.expire(key, 120);
+        redisConnection.incr("number:" + key);
+        setExpireKey("number:" + key);
     }
 
     public void setBytesValue(String key, byte[] value) {
         redisConnection.set(key.getBytes(), value);
+        setExpireKey(key);
+    }
+
+    public void setExpireKey(String key) {
         redisConnection.expire(key, 120);
     }
 
@@ -33,8 +32,9 @@ public class RedisService {
 
     public int getNumberRequest(String target) {
         try {
-            return Integer.parseInt(redisConnection.get(target));
+            return Integer.parseInt(redisConnection.get("number:" + target));
         } catch (Exception e) {
+            redisConnection.del("number:" + target);
             return 0;
         }
     }
@@ -43,7 +43,6 @@ public class RedisService {
         Jedis jedis = RedisConnection.getInstance();
 
         RedisService redisService = new RedisService();
-        redisService.setStrValue("key", "value");
 
         List<Integer> list = List.of(1, 2, 3, 4);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

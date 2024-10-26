@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 
 public class ResponseWriter {
     private static Logger logger = Logger.getLogger(ResponseWriter.class.getName());
+    private static final int NUMBER_REQUEST_TO_CACHE = 2;
     static final String CRLF = "\r\n";
 
     public static void write(OutputStream outputStream, HttpRequest request, HttpConfigurationAndResources configurationAndResources) {
@@ -26,59 +27,32 @@ public class ResponseWriter {
                 byte[] data = null;
                 String fileExtension = null;
 
-                /// Cần refactor lại code.
-                // Kiểm tra requestTarget được truy cập nhiều hay không?
+                /// Need to refactor this code
+                // Get data from redis server if it is cached.
                 RedisService redisService = new RedisService();
                 int numbersRequestToTarget = redisService.getNumberRequest(requestTarget);
-                if (numbersRequestToTarget >= 2) {
+                if (numbersRequestToTarget > NUMBER_REQUEST_TO_CACHE) {                                   // This resource is cached.
                     data = redisService.getBytesValue(requestTarget);
                     fileExtension = ResponseUtil.getFileExtension(configurationAndResources.getTargetResources().getResources().get(requestTarget));
                 } else {
+                    // Need to check if Server contain this file or not.
                     ObjectResponse objectResponse = ResponseUtil.readFile(requestTarget, configurationAndResources.getTargetResources());
                     fileExtension = objectResponse.getFileExtension();
                     data = objectResponse.getByteArrayOutputStream().toByteArray();
                 }
 
-                // Parallel
-                byte[] finalData = data;
-                Thread thead = new Thread(() -> {
-                    if (numbersRequestToTarget == 0) {
-                        redisService.setBytesValue(requestTarget, finalData);
-                        System.out.println("Thanh cong");
-                    }
-                    redisService.increaseValue("number:" + requestTarget);
-                    System.out.println("Lưu " + requestTarget);
-                });
-                thead.start();
+                cacheResource(data, numbersRequestToTarget, redisService, requestTarget);
 
                 String contentType = null;
                 if (method.name().equals(HttpMethod.GET.name())) {
-                    if (fileExtension.equals("txt")) {
-                        contentType = "Content-Type: text/plain; charset=UTF-8";
-                    } else if (fileExtension.equals("png")) {
-                        contentType = "Content-Type: image/png";
-                    } else if (fileExtension.equals("jpg") || fileExtension.equals("jpeg")) {
-                        contentType = "Content-Type: image/jpeg";
-                    } else if (fileExtension.equals("gif")) {
-                        contentType = "Content-Type: image/gif";
-                    } else if (fileExtension.equals("css")) {
-                        contentType = "Content-Type: text/css";
-                    }
-
+                    contentType = getContentType(fileExtension);
                 } else if (method.name().equals(HttpMethod.POST.name())) {
-                    String filepath = "simplehttpserver/src/main/resources/target_resources/uploads/" + request.getFilename();
-                    BufferedOutputStream fileOutputStream = new BufferedOutputStream(new FileOutputStream(filepath));
-                    fileOutputStream.write(request.getData());
-
-                    if (!Json.writeToJsonFile(request.getFilename(), filepath)) {
-                        logger.info("Can not write " + filepath + " to json file!. Cause filename already exits.");
-                    }
+                    uploadResource(request);
                 }
 
                 if (contentType == null) contentType = "Content-Type: text/html";
 
                 String responseHeader = "HTTP/1.1 200 OK" + CRLF + contentType + CRLF + "Content-Length: " + data.length + CRLF + CRLF;
-
                 outputStream.write(responseHeader.getBytes());
                 outputStream.write(data);
 
@@ -88,5 +62,46 @@ public class ResponseWriter {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void uploadResource(HttpRequest request) throws IOException {
+        String filepath = "simplehttpserver/src/main/resources/target_resources/uploads/" + request.getFilename();
+        BufferedOutputStream fileOutputStream = new BufferedOutputStream(new FileOutputStream(filepath));
+        fileOutputStream.write(request.getData());
+
+        if (!Json.writeToJsonFile(request.getFilename(), filepath)) {
+            logger.info("Can not write " + filepath + " to json file!. Cause filename already exits.");
+        }
+    }
+
+    private static String getContentType(String fileExtension) {
+        if (fileExtension.equals("txt")) {
+            return "Content-Type: text/plain; charset=UTF-8";
+        } else if (fileExtension.equals("png")) {
+            return "Content-Type: image/png";
+        } else if (fileExtension.equals("jpg") || fileExtension.equals("jpeg")) {
+            return "Content-Type: image/jpeg";
+        } else if (fileExtension.equals("gif")) {
+            return "Content-Type: image/gif";
+        } else if (fileExtension.equals("css")) {
+            return "Content-Type: text/css";
+        }
+        return null;
+    }
+
+    private static void cacheResource(byte[] data, int numbersRequestToTarget, RedisService redisService, String requestTarget) {
+        // parallel cache resource to reduce response time.
+        byte[] finalData = data;
+        Thread thead = new Thread(() -> {
+            if (numbersRequestToTarget == NUMBER_REQUEST_TO_CACHE) {
+                redisService.setBytesValue(requestTarget, finalData);
+                System.out.println("Cached resource successfully");
+            }else if(numbersRequestToTarget > NUMBER_REQUEST_TO_CACHE){
+                redisService.setExpireKey(requestTarget);
+            }
+            redisService.increaseValue(requestTarget);
+            System.out.println("Saved: " + requestTarget);
+        });
+        thead.start();
     }
 }
