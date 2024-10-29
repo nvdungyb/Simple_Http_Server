@@ -6,6 +6,7 @@ import http1.HttpMethod;
 import http1.HttpParser;
 import http1.HttpParsingException;
 import http1.HttpRequest;
+import proxy.BlackList;
 import redis.RedisService;
 import writer.ResponseWriter;
 
@@ -36,19 +37,24 @@ public class HttpConnectionWorkerThread extends Thread {
 
             HttpRequest request = new HttpParser().parseHttpRequest(clientInputStream);
 
-            statisticRequest(request);
-
-            if (request.getHeader().get("Host").startsWith("localhost")) {
-                if (request.getRequestTarget().equals("/analysis")) {
-                    StatisticResponse.analysisResponse(clientOutputStream);
-                } else {
-                    ResponseWriter.write(clientOutputStream, request, configurationAndResources);
-                }
+            if (isBlacklisted(request, BlackList.getInstance())) {
+                ResponseWriter.sendAccessDeniedResponse(request, clientOutputStream);
             } else {
-                if (HttpMethod.CONNECT.name().equalsIgnoreCase(request.getMethod().name())) {
-                    handleConnectRequest(request, clientOutputStream, clientInputStream);
+
+                statisticRequest(request);
+
+                if (request.getHeader().get("Host").startsWith("localhost")) {
+                    if (request.getRequestTarget().equals("/analysis")) {
+                        StatisticResponse.analysisResponse(clientOutputStream);
+                    } else {
+                        ResponseWriter.write(clientOutputStream, request, configurationAndResources);
+                    }
                 } else {
-                    handleHttpRequest(request, clientOutputStream);
+                    if (HttpMethod.CONNECT.name().equalsIgnoreCase(request.getMethod().name())) {
+                        handleConnectRequest(request, clientOutputStream, clientInputStream);
+                    } else {
+                        handleHttpRequest(request, clientOutputStream);
+                    }
                 }
             }
         } catch (IOException e) {
@@ -72,6 +78,12 @@ public class HttpConnectionWorkerThread extends Thread {
                 }
             }
         }
+    }
+
+    private boolean isBlacklisted(HttpRequest request, BlackList instance) {
+        String host = request.getHeader().get("Host");
+        String target = request.getRequestTarget();
+        return instance.blacklist.containsKey(host) && instance.blacklist.get(host).contains(target);
     }
 
     private void statisticRequest(HttpRequest request) {

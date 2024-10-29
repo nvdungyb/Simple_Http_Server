@@ -19,6 +19,7 @@ public class ResponseWriter {
     private static Logger logger = Logger.getLogger(ResponseWriter.class.getName());
     private static final int NUMBER_REQUEST_TO_CACHE = 2;
     static final String CRLF = "\r\n";
+    static final String SP = " ";
 
     public static void write(OutputStream outputStream, HttpRequest request, HttpConfigurationAndResources configurationAndResources) {
         try {
@@ -113,5 +114,14 @@ public class ResponseWriter {
             System.out.println("Saved: " + requestTarget);
         });
         thead.start();
+    }
+
+    public static void sendAccessDeniedResponse(HttpRequest request, OutputStream clientOutputStream) {
+        String httpResponse = request.getBestCompatibleHttpVersion().LITERAL + SP + 403 + SP + "Forbidden" + CRLF + "Content-Type: application/json" + CRLF + "Connection: close" + CRLF;
+        try {
+            clientOutputStream.write(httpResponse.getBytes());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
