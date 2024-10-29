@@ -54,13 +54,13 @@
       </ul>
       <li>Chuyển tiếp request: server nhận http request, phân tích và chuyển tiếp chúng tới remote server.</li>
       <ul>
-          <li>![img_3.png](img_3.png)</li>
+          <li>![img_3.png](images/img_3.png)</li>
       </ul>
       <li>Hỗ trợ request CONNECT (Https), tạo kênh kết nối giữa client và remote server trên cổng mặc định 443.</li>
       <li>Thống kê request: server theo dõi lưu lượng truy cập trong một khoảng thời gian cố định</li>
       <ul>
         <li>localhost:8080/analysis</li>
-        <li>  ![img_2.png](img_2.png)</li>
+        <li>  ![image](images/img_2.png)</li>
       </ul>
   </uL>
 
