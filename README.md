@@ -27,7 +27,7 @@
   <ul>
       <li>Xử lý đa luồng</li>
       <li>Đọc file cấu hình Json</li>
-      <li>Phân tích Http request và gửi Http response</li>
+      <li>Phân tích Http request và gửi Http response. Hỗ trợ thành công HTTP/1.1 với GET và POST</li>
       <li>Cho phép Upload tài nguyên lên server</li>
   </ul>
 
