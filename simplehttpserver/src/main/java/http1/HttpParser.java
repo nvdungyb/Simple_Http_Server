@@ -105,7 +105,7 @@ public class HttpParser {
         }
 
         for (String key : header.keySet()) {
-            System.out.println(key + " : " + header.get(key));
+            System.out.println(key + ": " + header.get(key));
         }
         request.setHeader(header);
     }
@@ -162,7 +162,6 @@ public class HttpParser {
             }
         }
 
-        if (outputStream.size() > 0)
-            request.setData(outputStream.toByteArray());
+        if (outputStream.size() > 0) request.setData(outputStream.toByteArray());
     }
 }

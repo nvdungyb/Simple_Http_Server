@@ -31,43 +31,47 @@
       <li>Cho phép Upload tài nguyên lên server</li>
   </ul>
 
-
 ### Tuần 2
+
 - **Mục tiêu:** Thực hiện caching tài nguyên.
 - **Công việc đã làm:**
     <ul>
         <li>Tìm hiểu redis, và cài đặt redis server</li>
         <li>Cache thành công tài nguyên, giảm thời gian đọc file từ ổ đĩa.</li>
-        <li>Sử lý song song, giảm thời gian phản hồi cho client.</li>
+
     </ul>
 
-## Cài đặt
+### Tuần 3
 
-Để cài đặt dự án, làm theo các bước sau:
+- **Mục tiêu:** Server đóng vai trò như một Proxy đơn giản.
+- **Công việc đã Làm:**
+    <uL>
+      <li>Cấu hình proxy trên client (SwitchyOmega)</li>
+      <ul>
+        <li>Scheme: HTTP</li>
+        <li>Server: 127.0.0.1</li>
+        <li>Port: 8080</li>
+      </ul>
+      <li>Chuyển tiếp request: server nhận http request, phân tích và chuyển tiếp chúng tới remote server.</li>
+      <ul>
+          <li>
+            <img src="images/img_3.png" alt="image_proxy_request"/>
+          </li>
+      </ul>
+      <li>Hỗ trợ request CONNECT (Https), tạo kênh kết nối giữa client và remote server trên cổng mặc định 443.</li>
+      <li>Thống kê request: server theo dõi lưu lượng truy cập trong một khoảng thời gian cố định</li>
+      <ul>
+        <li>localhost:8080/analysis</li>
+        <li>
+            <img src="images/img_2.png" alt="image_analysis_request"/>
+        </li>
+      </ul>
+  </uL>
 
-1. Download git: https://git-scm.com/download/win
-2. Clone project về máy sử dụng git clone:
-   Tạo 1 folder chứa file project sau đó bật git bash:
-   Chuột phải vào folder > Show more option > Git Bash here
+<br>
 
-```sh
-git clone https://github.com/jnp2018/801277361.git
-cd mid-project-801277361
-
-• Dùng git status để kiểm tra từng bước.
-1. Trước khi bắt đầu làm task, checkout trở về nhánh main để pull. Chạy lệnh:
-    o git checkout main
-    o git pull origin main
-2. Tạo nhánh mới để bắt đầu code:
-    o git checkout -b <tên nhánh mới>
-    o tạo xong thì bắt đầu code
-3. Sau khi code xong:
-    o git add .
-    o git commit -m “tin nhắn”
-4. Đẩy code mình vừa làm lên github và tạo pull request:
-    o Git push origin < tên nhánh mình vừa làm >
-    o Vào lại link project trên github và sẽ thấy “Compare & pull request”
-    o Bấm vào để kiểm tra code mình sửa và bấm Create.
-
-
-
+- **Chức năng sắp triển khai:**
+  <ul>
+    <li>Proxy có khả năng chặn một số trang web cụ thể.</li>  
+    <li>Proxy có khả năng Caching.</li>
+  </ul>
