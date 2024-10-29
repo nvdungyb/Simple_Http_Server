@@ -1,10 +1,12 @@
 package core;
 
+import analysis_request.AnalysisResponse;
 import config.HttpConfigurationAndResources;
 import http1.HttpMethod;
 import http1.HttpParser;
 import http1.HttpParsingException;
 import http1.HttpRequest;
+import redis.RedisService;
 import writer.ResponseWriter;
 
 import java.io.IOException;
@@ -34,8 +36,14 @@ public class HttpConnectionWorkerThread extends Thread {
 
             HttpRequest request = new HttpParser().parseHttpRequest(clientInputStream);
 
+            statisticRequest(request);
+
             if (request.getHeader().get("Host").startsWith("localhost")) {
-                ResponseWriter.write(clientOutputStream, request, configurationAndResources);
+                if (request.getRequestTarget().equals("/analysis")) {
+                    AnalysisResponse.analysisResponse(clientOutputStream);
+                } else {
+                    ResponseWriter.write(clientOutputStream, request, configurationAndResources);
+                }
             } else {
                 if (HttpMethod.CONNECT.name().equalsIgnoreCase(request.getMethod().name())) {
                     handleConnectRequest(request, clientOutputStream, clientInputStream);
@@ -64,6 +72,16 @@ public class HttpConnectionWorkerThread extends Thread {
                 }
             }
         }
+    }
+
+    private void statisticRequest(HttpRequest request) {
+        String host = request.getHeader().get("Host");
+        String target = request.getRequestTarget();
+
+        Thread cacheRequests = new Thread(() -> {
+            RedisService.cacheRequests(host, target);
+        });
+        cacheRequests.start();
     }
 
     private void handleConnectRequest(HttpRequest request, OutputStream clientOutputStream, InputStream clientInputStream) throws IOException {
