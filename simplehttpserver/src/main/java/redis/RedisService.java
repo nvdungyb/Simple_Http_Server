@@ -1,6 +1,6 @@
 package redis;
 
-import analysis_request.AnalysisTarget;
+import analysis_request.StatisticTarget;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
@@ -88,19 +88,19 @@ public class RedisService {
         jedis.close();
     }
 
-    public static Map<String, List<AnalysisTarget>> getAllRequests() {
+    public static Map<String, List<StatisticTarget>> getAllRequests() {
         Jedis jedis = getConnection();
         Set<String> allRequest = jedis.keys("analysis:*");
 
-        Map<String, List<AnalysisTarget>> map = new HashMap<>();
+        Map<String, List<StatisticTarget>> map = new HashMap<>();
         for (String request : allRequest) {
-            List<AnalysisTarget> analysisTarget = new ArrayList<>();
+            List<StatisticTarget> statisticTarget = new ArrayList<>();
             List<Tuple> tuples = jedis.zrangeWithScores(request, 0, -1);
 
             tuples.stream().forEach(val -> {
-                analysisTarget.add(new AnalysisTarget(val.getElement(), (int) val.getScore()));
+                statisticTarget.add(new StatisticTarget(val.getElement(), (int) val.getScore()));
             });
-            map.put(request, analysisTarget);
+            map.put(request, statisticTarget);
         }
 
         map.keySet().stream().forEach(val -> System.out.println(map.get(val)));

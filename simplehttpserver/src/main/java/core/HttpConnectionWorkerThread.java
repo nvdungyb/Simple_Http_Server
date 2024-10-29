@@ -1,6 +1,6 @@
 package core;
 
-import analysis_request.AnalysisResponse;
+import analysis_request.StatisticResponse;
 import config.HttpConfigurationAndResources;
 import http1.HttpMethod;
 import http1.HttpParser;
@@ -40,7 +40,7 @@ public class HttpConnectionWorkerThread extends Thread {
 
             if (request.getHeader().get("Host").startsWith("localhost")) {
                 if (request.getRequestTarget().equals("/analysis")) {
-                    AnalysisResponse.analysisResponse(clientOutputStream);
+                    StatisticResponse.analysisResponse(clientOutputStream);
                 } else {
                     ResponseWriter.write(clientOutputStream, request, configurationAndResources);
                 }
