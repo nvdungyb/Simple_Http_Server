@@ -4,6 +4,7 @@ import config.HttpConfigurationAndResources;
 import http1.HttpMethod;
 import http1.HttpRequest;
 import redis.RedisService;
+import redis.clients.jedis.Jedis;
 import util.Json;
 import util.ObjectResponse;
 import util.ResponseUtil;
@@ -30,16 +31,15 @@ public class ResponseWriter {
                 /// Need to refactor this code
                 // Get data from redis server if it is cached.
                 int numbersRequestToTarget = 0;
-                RedisService redisService = null;
                 boolean isRedisConnected = true;
                 try {
-                    redisService = new RedisService();
-                    numbersRequestToTarget = redisService.getNumberRequest(requestTarget);
-                } catch (Exception e) {                                     // In case: can not connect to redis server.
+                    numbersRequestToTarget = RedisService.getNumberRequest(requestTarget);
+                } catch (
+                        Exception e) {                                           // In case: can not connect to redis server.
                     isRedisConnected = false;
                 }
                 if (numbersRequestToTarget > NUMBER_REQUEST_TO_CACHE) {                                   // This resource is cached.
-                    data = redisService.getBytesValue(requestTarget);
+                    data = RedisService.getBytesValue(requestTarget);
                     fileExtension = ResponseUtil.getFileExtension(configurationAndResources.getTargetResources().getResources().get(requestTarget));
                 } else {
                     // Need to check if Server contain this file or not.
@@ -49,7 +49,7 @@ public class ResponseWriter {
                 }
 
                 if (isRedisConnected) {
-                    cacheResource(data, numbersRequestToTarget, redisService, requestTarget);
+                    cacheResource(data, numbersRequestToTarget, requestTarget);
                 }
 
                 String contentType = null;
@@ -98,19 +98,18 @@ public class ResponseWriter {
         return null;
     }
 
-    private static void cacheResource(byte[] data, int numbersRequestToTarget, RedisService redisService, String requestTarget) {
-        if (redisService == null) return;
-
+    private static void cacheResource(byte[] data, int numbersRequestToTarget, String requestTarget) {
         // parallel cache resource to reduce response time.
         byte[] finalData = data;
+        Jedis jedis = RedisService.getConnection();
         Thread thead = new Thread(() -> {
             if (numbersRequestToTarget == NUMBER_REQUEST_TO_CACHE) {
-                redisService.setBytesValue(requestTarget, finalData);
+                RedisService.setBytesValue(requestTarget, finalData);
                 System.out.println("Cached resource successfully");
             } else if (numbersRequestToTarget > NUMBER_REQUEST_TO_CACHE) {
-                redisService.setExpireKey(requestTarget);
+                RedisService.setExpireKey(jedis, requestTarget);
             }
-            redisService.increaseValue(requestTarget);
+            RedisService.increaseValue(requestTarget);
             System.out.println("Saved: " + requestTarget);
         });
         thead.start();
