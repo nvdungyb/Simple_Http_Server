@@ -4,7 +4,6 @@ import config.HttpConfigurationAndResources;
 import http1.HttpMethod;
 import http1.HttpRequest;
 import redis.RedisService;
-import redis.clients.jedis.Jedis;
 import util.Json;
 import util.ObjectResponse;
 import util.ResponseUtil;
@@ -17,8 +16,9 @@ import java.util.logging.Logger;
 
 public class ResponseWriter {
     private static Logger logger = Logger.getLogger(ResponseWriter.class.getName());
-    private static final int NUMBER_REQUEST_TO_CACHE = 2;
+    public static final int NUMBER_REQUEST_TO_CACHE = 2;
     static final String CRLF = "\r\n";
+    static final String SP = " ";
 
     public static void write(OutputStream outputStream, HttpRequest request, HttpConfigurationAndResources configurationAndResources) {
         try {
@@ -49,7 +49,7 @@ public class ResponseWriter {
                 }
 
                 if (isRedisConnected) {
-                    cacheResource(data, numbersRequestToTarget, requestTarget);
+                    RedisService.cacheResource(data, numbersRequestToTarget, requestTarget);
                 }
 
                 String contentType = null;
@@ -98,20 +98,12 @@ public class ResponseWriter {
         return null;
     }
 
-    private static void cacheResource(byte[] data, int numbersRequestToTarget, String requestTarget) {
-        // parallel cache resource to reduce response time.
-        byte[] finalData = data;
-        Jedis jedis = RedisService.getConnection();
-        Thread thead = new Thread(() -> {
-            if (numbersRequestToTarget == NUMBER_REQUEST_TO_CACHE) {
-                RedisService.setBytesValue(requestTarget, finalData);
-                System.out.println("Cached resource successfully");
-            } else if (numbersRequestToTarget > NUMBER_REQUEST_TO_CACHE) {
-                RedisService.setExpireKey(jedis, requestTarget);
-            }
-            RedisService.increaseValue(requestTarget);
-            System.out.println("Saved: " + requestTarget);
-        });
-        thead.start();
+    public static void sendAccessDeniedResponse(HttpRequest request, OutputStream clientOutputStream) {
+        String httpResponse = request.getBestCompatibleHttpVersion().LITERAL + SP + 403 + SP + "Forbidden" + CRLF + "Content-Type: application/json" + CRLF + "Connection: close" + CRLF;
+        try {
+            clientOutputStream.write(httpResponse.getBytes());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

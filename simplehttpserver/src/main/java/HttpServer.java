@@ -3,6 +3,7 @@ import config.HttpConfiguration;
 import config.HttpConfigurationAndResources;
 import config.TargetResources;
 import core.ServerListenerThread;
+import proxy.BlackList;
 
 import java.util.HashMap;
 import java.util.logging.Logger;

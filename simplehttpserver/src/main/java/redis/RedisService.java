@@ -5,6 +5,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.resps.Tuple;
+import writer.ResponseWriter;
 
 import java.io.*;
 import java.util.*;
@@ -20,17 +21,18 @@ public class RedisService {
         Jedis jedis = getConnection();
         jedis.incr("number:" + key);
         setExpireKey(jedis, "number:" + key);
+        jedis.close();
     }
 
     public static void setBytesValue(String key, byte[] value) {
         Jedis jedis = getConnection();
         jedis.set(key.getBytes(), value);
         setExpireKey(jedis, key);
+        jedis.close();
     }
 
     public static void setExpireKey(Jedis jedis, String key) {
         jedis.expire(key, 120);
-        jedis.close();
     }
 
     public static byte[] getBytesValue(String key) {
@@ -106,5 +108,22 @@ public class RedisService {
         map.keySet().stream().forEach(val -> System.out.println(map.get(val)));
         jedis.close();
         return map;
+    }
+
+    public static void cacheResource(byte[] data, int numbersRequestToTarget, String requestTarget) {
+        // parallel cache resource to reduce response time.
+        byte[] finalData = data;
+        Jedis jedis = RedisService.getConnection();
+        Thread thead = new Thread(() -> {
+            if (numbersRequestToTarget == ResponseWriter.NUMBER_REQUEST_TO_CACHE) {
+                RedisService.setBytesValue(requestTarget, finalData);
+                System.out.println("Cached resource successfully");
+            } else if (numbersRequestToTarget > ResponseWriter.NUMBER_REQUEST_TO_CACHE) {
+                RedisService.setExpireKey(jedis, requestTarget);
+            }
+            RedisService.increaseValue(requestTarget);
+            System.out.println("Saved: " + requestTarget);
+        });
+        thead.start();
     }
 }
