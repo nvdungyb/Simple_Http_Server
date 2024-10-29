@@ -52,18 +52,28 @@
         <li>Server: 127.0.0.1</li>
         <li>Port: 8080</li>
       </ul>
+      <br>
       <li>Chuyển tiếp request: server nhận http request, phân tích và chuyển tiếp chúng tới remote server.</li>
       <ul>
           <li>
             <img src="images/img_3.png" alt="image_proxy_request"/>
           </li>
       </ul>
+      <br>
       <li>Hỗ trợ request CONNECT (Https), tạo kênh kết nối giữa client và remote server trên cổng mặc định 443.</li>
+      <br>
       <li>Thống kê request: server theo dõi lưu lượng truy cập trong một khoảng thời gian cố định</li>
       <ul>
         <li>localhost:8080/analysis</li>
         <li>
             <img src="images/img_2.png" alt="image_analysis_request"/>
+        </li>
+      </ul>
+      <br>
+      <li>Proxy có khả năng chặn một số trang web cụ thể.</li>  
+      <ul>
+        <li>
+            <img src="images/access_denied.png" alt="image_analysis_request"/>
         </li>
       </ul>
   </uL>
@@ -72,6 +82,5 @@
 
 - **Chức năng sắp triển khai:**
   <ul>
-    <li>Proxy có khả năng chặn một số trang web cụ thể.</li>  
     <li>Proxy có khả năng Caching.</li>
   </ul>
