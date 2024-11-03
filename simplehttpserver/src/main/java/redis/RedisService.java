@@ -55,6 +55,11 @@ public class RedisService {
         }
     }
 
+    public static boolean findKey(String key){
+        Jedis jedis = getConnection();
+        return jedis.exists(key);
+    }
+
     public static void main(String[] args) {
         Jedis jedis = RedisConnection.getInstance();
 

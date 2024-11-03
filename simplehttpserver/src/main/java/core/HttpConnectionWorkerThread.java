@@ -10,6 +10,7 @@ import proxy.BlackList;
 import redis.RedisService;
 import writer.ResponseWriter;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -141,30 +142,66 @@ public class HttpConnectionWorkerThread extends Thread {
         String host = hostParts[0];
         int port = hostParts.length > 1 ? Integer.parseInt(hostParts[1]) : 80; // Mặc định là cổng 80 cho HTTP
 
-        // Tạo kết nối tới remote server
-        try (Socket proxySocket = new Socket(host, port)) {
-            OutputStream proxyOutputStream = proxySocket.getOutputStream();
-            InputStream proxyInputStream = proxySocket.getInputStream();
+        String requestTarget = request.getRequestTarget();
+        if (RedisService.findKey(requestTarget)) {
+            getDataAndResponse(requestTarget, clientOutputStream);
+        } else {
+            // Tạo kết nối tới remote server
+            try (Socket proxySocket = new Socket(host, port)) {
+                OutputStream proxyOutputStream = proxySocket.getOutputStream();
+                InputStream proxyInputStream = proxySocket.getInputStream();
 
-            // Tạo request HTTP hợp lệ để gửi tới remote server
-            StringBuilder httpRequest = new StringBuilder();
-            httpRequest.append(request.getMethod()).append(" ").append(request.getRequestTarget()).append(" ").append(request.getBestCompatibleHttpVersion().LITERAL).append("\r\n");
+                // Tạo request HTTP hợp lệ để gửi tới remote server
+                StringBuilder httpRequest = new StringBuilder();
+                httpRequest.append(request.getMethod()).append(" ").append(request.getRequestTarget()).append(" ").append(request.getBestCompatibleHttpVersion().LITERAL).append("\r\n");
 
-            for (Map.Entry<String, String> header : request.getHeader().entrySet()) {
-                httpRequest.append(header.getKey()).append(": ").append(header.getValue()).append("\r\n");
+                for (Map.Entry<String, String> header : request.getHeader().entrySet()) {
+                    httpRequest.append(header.getKey()).append(": ").append(header.getValue()).append("\r\n");
+                }
+                httpRequest.append("Connection: close\r\n"); // Đảm bảo kết nối được đóng sau khi nhận phản hồi
+                httpRequest.append("\r\n");
+
+                // Gửi request tới remote server
+                System.out.println("Request to remote server: " + httpRequest.toString());
+                proxyOutputStream.write(httpRequest.toString().getBytes());
+                proxyOutputStream.flush();
+
+                // Gửi body tới remote server nếu có
+                // Chưa xử lý được trường hợp client thực hiện POST đăng nhập.
+
+                if (requestTarget.endsWith(".css")) {
+                    forwardDataAndCache(requestTarget, proxyInputStream, clientOutputStream);
+                } else {
+                    forwardData(proxyInputStream, clientOutputStream);
+                }
             }
-            httpRequest.append("Connection: close\r\n"); // Đảm bảo kết nối được đóng sau khi nhận phản hồi
-            httpRequest.append("\r\n");
+        }
+    }
 
-            // Gửi request tới remote server
-            System.out.println("Request to remote server: " + httpRequest.toString());
-            proxyOutputStream.write(httpRequest.toString().getBytes());
-            proxyOutputStream.flush();
+    private void forwardDataAndCache(String requestTarget, InputStream proxyInputStream, OutputStream clientOutputStream) {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
-            // Gửi body tới remote server nếu có
-            // Chưa xử lý được trường hợp client thực hiện POST đăng nhập.
+        byte[] buffer = new byte[4096];
+        int bytesRead;
+        try {
+            while ((bytesRead = proxyInputStream.read(buffer)) != -1) {
+                clientOutputStream.write(buffer, 0, bytesRead);
+                bos.write(buffer, 0, bytesRead);
+                clientOutputStream.flush();
+            }
+        } catch (IOException e) {
+        }
 
-            forwardData(proxyInputStream, clientOutputStream);
+        byte[] bytes = bos.toByteArray();
+        RedisService.setBytesValue(requestTarget, bytes);
+    }
+
+    private void getDataAndResponse(String requestTarget, OutputStream clientOutputStream) {
+        byte[] data = RedisService.getBytesValue(requestTarget);
+        try {
+            clientOutputStream.write(data);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
