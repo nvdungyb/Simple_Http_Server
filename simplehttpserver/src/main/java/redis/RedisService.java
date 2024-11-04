@@ -7,7 +7,6 @@ import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.resps.Tuple;
 import writer.ResponseWriter;
 
-import java.io.*;
 import java.util.*;
 
 public class RedisService {
@@ -45,41 +44,13 @@ public class RedisService {
     public static int getNumberRequest(String target) {
         Jedis jedis = getConnection();
         try {
-            int parsedValue = Integer.parseInt(jedis.get(target));
+            int parsedValue = Integer.parseInt(jedis.get("number:" + target));
             jedis.close();
             return parsedValue;
         } catch (Exception e) {
             jedis.del("number:" + target);
             jedis.close();
             return 0;
-        }
-    }
-
-    public static void main(String[] args) {
-        Jedis jedis = RedisConnection.getInstance();
-
-        RedisService redisService = new RedisService();
-
-        List<Integer> list = List.of(1, 2, 3, 4);
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        try {
-            ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
-            objectOutputStream.writeObject(list);
-            objectOutputStream.flush();
-
-            byte[] bytes = outputStream.toByteArray();
-            redisService.setBytesValue("object", bytes);
-
-            // read bytes
-            byte[] readBytes = redisService.getBytesValue("object");
-            ByteArrayInputStream inputStream = new ByteArrayInputStream(readBytes);
-            ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
-            List<Integer> readValue = (List<Integer>) objectInputStream.readObject();
-            readValue.forEach(System.out::println);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
         }
     }
 
