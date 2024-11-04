@@ -21,6 +21,7 @@ import java.util.logging.Logger;
 public class HttpConnectionWorkerThread extends Thread {
     private Socket socket;
     private HttpConfigurationAndResources configurationAndResources;
+    private static final String fileExtensionToCache = "NoExtension";
     private final static Logger logger = Logger.getLogger(HttpConnectionWorkerThread.class.getName());
 
     public HttpConnectionWorkerThread(Socket socket) {
@@ -143,12 +144,16 @@ public class HttpConnectionWorkerThread extends Thread {
         int port = hostParts.length > 1 ? Integer.parseInt(hostParts[1]) : 80; // Mặc định là cổng 80 cho HTTP
 
         String requestTarget = request.getRequestTarget();
-        if (requestTarget.endsWith("jpg")) {
-            System.out.println("test");
+
+        boolean isCached = false;
+        if (requestTarget.endsWith(fileExtensionToCache) && RedisService.findKey(requestTarget)) {
+            byte[] data = RedisService.getBytesValue(requestTarget);
+            if (data != null) {
+                getDataAndResponse(requestTarget, clientOutputStream);
+                isCached = true;
+            }
         }
-        if (RedisService.findKey(requestTarget)) {
-            getDataAndResponse(requestTarget, clientOutputStream);
-        } else {
+        if (!isCached) {
             // Tạo kết nối tới remote server
             try (Socket proxySocket = new Socket(host, port)) {
                 OutputStream proxyOutputStream = proxySocket.getOutputStream();
@@ -172,7 +177,8 @@ public class HttpConnectionWorkerThread extends Thread {
                 // Gửi body tới remote server nếu có
                 // Chưa xử lý được trường hợp client thực hiện POST đăng nhập.
 
-                if (requestTarget.endsWith(".css")) {
+                /// Todo: Cache dữ liệu không thành công? Fix that.
+                if (requestTarget.endsWith(fileExtensionToCache)) {
                     forwardDataAndCache(requestTarget, proxyInputStream, clientOutputStream);
                 } else {
                     forwardData(proxyInputStream, clientOutputStream);
@@ -183,20 +189,29 @@ public class HttpConnectionWorkerThread extends Thread {
 
     private void forwardDataAndCache(String requestTarget, InputStream proxyInputStream, OutputStream clientOutputStream) {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-
         byte[] buffer = new byte[4096];
         int bytesRead;
         try {
             while ((bytesRead = proxyInputStream.read(buffer)) != -1) {
                 clientOutputStream.write(buffer, 0, bytesRead);
                 bos.write(buffer, 0, bytesRead);
-                clientOutputStream.flush();
+                clientOutputStream.flush(); // Đảm bảo dữ liệu đến client ngay lập tức
+            }
+            byte[] bytes = bos.toByteArray();
+            if (bytes.length > 0) {
+                RedisService.setBytesValue(requestTarget, bytes);
             }
         } catch (IOException e) {
+            logger.warning("Error forwarding data and caching: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            try {
+                bos.close();
+                clientOutputStream.close(); // Đảm bảo đóng luồng khi hoàn tất
+            } catch (IOException e) {
+                logger.warning("Error closing ByteArrayOutputStream: " + e.getMessage());
+            }
         }
-
-        byte[] bytes = bos.toByteArray();
-        RedisService.setBytesValue(requestTarget, bytes);
     }
 
     private void getDataAndResponse(String requestTarget, OutputStream clientOutputStream) {
@@ -204,6 +219,7 @@ public class HttpConnectionWorkerThread extends Thread {
         try {
             clientOutputStream.write(data);
             clientOutputStream.flush();
+            clientOutputStream.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

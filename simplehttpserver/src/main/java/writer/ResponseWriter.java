@@ -34,8 +34,7 @@ public class ResponseWriter {
                 boolean isRedisConnected = true;
                 try {
                     numbersRequestToTarget = RedisService.getNumberRequest(requestTarget);
-                } catch (
-                        Exception e) {                                           // In case: can not connect to redis server.
+                } catch (Exception e) {     // In case: can not connect to redis server.
                     isRedisConnected = false;
                 }
                 if (numbersRequestToTarget > NUMBER_REQUEST_TO_CACHE) {                                   // This resource is cached.
