@@ -143,6 +143,9 @@ public class HttpConnectionWorkerThread extends Thread {
         int port = hostParts.length > 1 ? Integer.parseInt(hostParts[1]) : 80; // Mặc định là cổng 80 cho HTTP
 
         String requestTarget = request.getRequestTarget();
+        if (requestTarget.endsWith("jpg")) {
+            System.out.println("test");
+        }
         if (RedisService.findKey(requestTarget)) {
             getDataAndResponse(requestTarget, clientOutputStream);
         } else {
@@ -200,6 +203,7 @@ public class HttpConnectionWorkerThread extends Thread {
         byte[] data = RedisService.getBytesValue(requestTarget);
         try {
             clientOutputStream.write(data);
+            clientOutputStream.flush();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
