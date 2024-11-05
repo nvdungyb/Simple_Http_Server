@@ -80,7 +80,23 @@
 
 <br>
 
-- **Chức năng sắp triển khai:**
-  <ul>
-    <li>Proxy có khả năng Caching.</li>
+### Tuần 4
+
+- **Mục tiêu:** Server có thể cache được dữ liệu.
+- **Công việc đã Làm:**
+    <ul>
+        <li>Cache thành công tài nguyên của proxy server.</li>
+        <ul>
+        <li>
+            <img src="images/totoro_caching.png" alt="image_analysis_request"/>
+        </li>
+        <li>
+            <img src="images/tototo_data.png" alt="totoro_data"/>
+        </li>
+      </ul>  
   </ul>
+  <br>
+- **Công việc đang Làm:**
+    <ul>
+        <li>Fix bug pending khi client yêu cầu tài nguyên của remote server đã được cache.</li>
+    </ul>
