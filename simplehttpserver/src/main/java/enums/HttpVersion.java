@@ -1,4 +1,6 @@
-package http1;
+package enums;
+
+import exception.BadHttpVersionException;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

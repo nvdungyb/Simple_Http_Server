@@ -2,9 +2,9 @@ package core;
 
 import analysis_request.StatisticResponse;
 import config.HttpConfigurationAndResources;
-import http1.HttpMethod;
+import enums.HttpMethod;
 import http1.HttpParser;
-import http1.HttpParsingException;
+import exception.HttpParsingException;
 import http1.HttpRequest;
 import proxy.BlackList;
 import redis.RedisService;

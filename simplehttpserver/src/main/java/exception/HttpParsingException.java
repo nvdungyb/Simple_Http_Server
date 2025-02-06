@@ -1,5 +1,6 @@
-package http1;
+package exception;
 
+import enums.HttpStatusCode;
 import lombok.Data;
 
 @Data
