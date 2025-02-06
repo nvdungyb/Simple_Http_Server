@@ -19,7 +19,8 @@ public class RedisService {
 
     public static void increaseValue(String key) {
         Jedis jedis = getConnection();
-        jedis.incr("number:" + key);
+        long incrValue = jedis.incr("number:" + key);
+        System.out.println("IncreaseValue: " + key + ": " + incrValue);
         setExpireKey(jedis, "number:" + key);
         jedis.close();
     }
@@ -45,7 +46,7 @@ public class RedisService {
     public static int getNumberRequest(String target) {
         Jedis jedis = getConnection();
         try {
-            int parsedValue = Integer.parseInt(jedis.get(target));
+            int parsedValue = Integer.parseInt(jedis.get("number:" + target));
             jedis.close();
             return parsedValue;
         } catch (Exception e) {
@@ -53,6 +54,11 @@ public class RedisService {
             jedis.close();
             return 0;
         }
+    }
+
+    public static boolean findKey(String key) {
+        Jedis jedis = getConnection();
+        return jedis.exists(key);
     }
 
     public static void main(String[] args) {
@@ -118,9 +124,8 @@ public class RedisService {
             if (numbersRequestToTarget == ResponseWriter.NUMBER_REQUEST_TO_CACHE) {
                 RedisService.setBytesValue(requestTarget, finalData);
                 System.out.println("Cached resource successfully");
-            } else if (numbersRequestToTarget > ResponseWriter.NUMBER_REQUEST_TO_CACHE) {
-                RedisService.setExpireKey(jedis, requestTarget);
             }
+            RedisService.setExpireKey(jedis, requestTarget);
             RedisService.increaseValue(requestTarget);
             System.out.println("Saved: " + requestTarget);
         });

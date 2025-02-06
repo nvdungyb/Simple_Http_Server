@@ -1,4 +1,4 @@
-package http1;
+package enums;
 
 public enum HttpStatusCode {
     /* CLIENT errors.*/

@@ -1,7 +1,7 @@
-package util;
+package utils;
 
 import config.TargetResources;
-import http1.HttpStatusCode;
+import enums.HttpStatusCode;
 
 import java.io.*;
 

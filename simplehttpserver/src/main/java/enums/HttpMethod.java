@@ -1,4 +1,4 @@
-package http1;
+package enums;
 
 import java.util.Arrays;
 

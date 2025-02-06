@@ -1,7 +1,7 @@
 package config;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import exception.HttpConfigurationException;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -25,26 +25,18 @@ public class ConfigurationManager {
      * @param filePath
      */
     public <T> T loadConfigurationFile(String filePath, Class<T> clazz) {
-        FileReader fileReader = null;
-        try {
-            fileReader = new FileReader(filePath);
-        } catch (FileNotFoundException ex) {
-            throw new HttpConfigurationException(ex);
-        }
-        StringBuffer sb = new StringBuffer();
-        int i;
-        try {
-            while ((i = fileReader.read()) != -1) {
+        try (FileReader reader = new FileReader(filePath)) {
+            StringBuilder sb = new StringBuilder();
+            int i;
+            while ((i = reader.read()) != -1) {
                 sb.append((char) i);
             }
-        } catch (IOException ex) {
-            throw new HttpConfigurationException(ex);
-        }
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
+            ObjectMapper objectMapper = new ObjectMapper();
             return objectMapper.readValue(sb.toString(), clazz);
-        } catch (JsonProcessingException e) {
+        } catch (FileNotFoundException ex) {
+            throw new HttpConfigurationException(ex);
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }

@@ -1,5 +1,11 @@
 package http1;
 
+import enums.HttpMethod;
+import enums.HttpStatusCode;
+import enums.HttpVersion;
+import exception.BadHttpVersionException;
+import exception.HttpParsingException;
+
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -18,7 +24,7 @@ public class HttpRequest extends HttpMessage {
     public HttpMethod getMethod() {
         return method;
     }
-    
+
     void setMethod(String methodName) throws HttpParsingException {
         HttpMethod method = Arrays.stream(HttpMethod.values())
                 .filter(element -> element.name().equals(methodName))

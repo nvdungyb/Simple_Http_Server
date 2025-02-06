@@ -1,4 +1,4 @@
-package http1;
+package exception;
 
 public class BadHttpVersionException extends Exception{
 }

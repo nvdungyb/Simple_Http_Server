@@ -1,5 +1,10 @@
 package http1;
 
+import enums.HttpMethod;
+import enums.HttpStatusCode;
+import exception.BadHttpVersionException;
+import exception.HttpParsingException;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
