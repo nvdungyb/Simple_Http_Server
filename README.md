@@ -3,11 +3,8 @@
 Đây là dự án giữa kỳ, chủ đề: HTTP server.
 <br>
 
-**Thành viên:**
-
+**1 Thành viên:**
 - Nguyễn Văn Dũng - B21DCCN277
-- Nguyễn Đức Hiếu - B21DCCN361
-- Hoàng Gia Vương - B21DCCN801
 
 ## Mô tả
 
