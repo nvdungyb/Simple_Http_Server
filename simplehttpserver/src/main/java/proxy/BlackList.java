@@ -23,7 +23,7 @@ public class BlackList {
 
     public static BlackList getInstance() {
         if (instance == null) {
-            instance = ConfigurationManager.getInstance().loadConfigurationFile("simplehttpserver/src/main/resources/blacklist.json", BlackList.class);
+            instance = ConfigurationManager.getInstance().loadConfigurationFile("src/main/resources/blacklist.json", BlackList.class);
         }
         return instance;
     }

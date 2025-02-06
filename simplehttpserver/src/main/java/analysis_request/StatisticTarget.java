@@ -4,8 +4,8 @@ import lombok.Data;
 
 @Data
 public class StatisticTarget implements Comparable<StatisticTarget> {
-    public String target;
-    public int numberRequests;
+    private String target;
+    private int numberRequests;
 
     public StatisticTarget(String element, int score) {
         this.target = element;

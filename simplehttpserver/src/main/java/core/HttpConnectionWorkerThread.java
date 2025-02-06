@@ -18,10 +18,10 @@ import java.net.Socket;
 import java.util.Map;
 import java.util.logging.Logger;
 
-public class HttpConnectionWorkerThread extends Thread {
+public class HttpConnectionWorkerThread implements Runnable {
     private Socket socket;
     private HttpConfigurationAndResources configurationAndResources;
-    private static final String fileExtensionToCache = "NoExtension";
+    private static final String fileExtensionToCache = "css";
     private final static Logger logger = Logger.getLogger(HttpConnectionWorkerThread.class.getName());
 
     public HttpConnectionWorkerThread(Socket socket) {

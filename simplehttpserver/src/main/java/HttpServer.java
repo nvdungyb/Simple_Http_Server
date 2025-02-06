@@ -3,7 +3,6 @@ import config.HttpConfiguration;
 import config.HttpConfigurationAndResources;
 import config.TargetResources;
 import core.ServerListenerThread;
-import proxy.BlackList;
 
 import java.util.HashMap;
 import java.util.logging.Logger;
@@ -12,20 +11,20 @@ import java.util.logging.Logger;
  * Driver class for Http server.
  */
 public class HttpServer {
-    private final static Logger logger = Logger.getLogger(HttpServer.class.getName());
+    private static final Logger logger = Logger.getLogger(HttpServer.class.getName());
 
     public static void main(String[] args) {
         logger.info("Server starting...");
 
-        HttpConfiguration httpConfiguration = ConfigurationManager.getInstance().loadConfigurationFile("simplehttpserver/src/main/resources/http.json", HttpConfiguration.class);
-        HashMap<String, String> resources = ConfigurationManager.getInstance().loadConfigurationFile("simplehttpserver/src/main/resources/request_target.json", HashMap.class);
+        HttpConfiguration httpConfiguration = ConfigurationManager.getInstance().loadConfigurationFile("src/main/resources/http.json", HttpConfiguration.class);
+        HashMap<String, String> resources = ConfigurationManager.getInstance().loadConfigurationFile("src/main/resources/request_target.json", HashMap.class);
         TargetResources targetResources = new TargetResources(resources);
 
         HttpConfigurationAndResources httpConfigurationAndResources = HttpConfigurationAndResources.getInstance();
         httpConfigurationAndResources.setHttpConfiguration(httpConfiguration);
         httpConfigurationAndResources.setTargetResources(targetResources);
 
-        System.out.println(httpConfigurationAndResources);
+        logger.info(httpConfigurationAndResources.toString());
 
         try {
             ServerListenerThread serverListenerThread = new ServerListenerThread(httpConfiguration.getPort(), httpConfiguration.getWebroot());
