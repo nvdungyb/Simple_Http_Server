@@ -1,4 +1,4 @@
-package config;
+package exception;
 
 public class HttpConfigurationException extends RuntimeException {
     public HttpConfigurationException() {

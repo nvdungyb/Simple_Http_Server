@@ -7,6 +7,7 @@ import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.resps.Tuple;
 import writer.ResponseWriter;
 
+import java.io.*;
 import java.util.*;
 
 public class RedisService {
@@ -18,7 +19,8 @@ public class RedisService {
 
     public static void increaseValue(String key) {
         Jedis jedis = getConnection();
-        jedis.incr("number:" + key);
+        long incrValue = jedis.incr("number:" + key);
+        System.out.println("IncreaseValue: " + key + ": " + incrValue);
         setExpireKey(jedis, "number:" + key);
         jedis.close();
     }
@@ -51,6 +53,39 @@ public class RedisService {
             jedis.del("number:" + target);
             jedis.close();
             return 0;
+        }
+    }
+
+    public static boolean findKey(String key) {
+        Jedis jedis = getConnection();
+        return jedis.exists(key);
+    }
+
+    public static void main(String[] args) {
+        Jedis jedis = RedisConnection.getInstance();
+
+        RedisService redisService = new RedisService();
+
+        List<Integer> list = List.of(1, 2, 3, 4);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        try {
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+            objectOutputStream.writeObject(list);
+            objectOutputStream.flush();
+
+            byte[] bytes = outputStream.toByteArray();
+            redisService.setBytesValue("object", bytes);
+
+            // read bytes
+            byte[] readBytes = redisService.getBytesValue("object");
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(readBytes);
+            ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+            List<Integer> readValue = (List<Integer>) objectInputStream.readObject();
+            readValue.forEach(System.out::println);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -89,9 +124,8 @@ public class RedisService {
             if (numbersRequestToTarget == ResponseWriter.NUMBER_REQUEST_TO_CACHE) {
                 RedisService.setBytesValue(requestTarget, finalData);
                 System.out.println("Cached resource successfully");
-            } else if (numbersRequestToTarget > ResponseWriter.NUMBER_REQUEST_TO_CACHE) {
-                RedisService.setExpireKey(jedis, requestTarget);
             }
+            RedisService.setExpireKey(jedis, requestTarget);
             RedisService.increaseValue(requestTarget);
             System.out.println("Saved: " + requestTarget);
         });

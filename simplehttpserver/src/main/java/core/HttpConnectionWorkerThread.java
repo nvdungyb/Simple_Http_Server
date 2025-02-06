@@ -2,14 +2,15 @@ package core;
 
 import analysis_request.StatisticResponse;
 import config.HttpConfigurationAndResources;
-import http1.HttpMethod;
+import enums.HttpMethod;
 import http1.HttpParser;
-import http1.HttpParsingException;
+import exception.HttpParsingException;
 import http1.HttpRequest;
 import proxy.BlackList;
 import redis.RedisService;
 import writer.ResponseWriter;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -17,9 +18,10 @@ import java.net.Socket;
 import java.util.Map;
 import java.util.logging.Logger;
 
-public class HttpConnectionWorkerThread extends Thread {
+public class HttpConnectionWorkerThread implements Runnable {
     private Socket socket;
     private HttpConfigurationAndResources configurationAndResources;
+    private static final String fileExtensionToCache = "css";
     private final static Logger logger = Logger.getLogger(HttpConnectionWorkerThread.class.getName());
 
     public HttpConnectionWorkerThread(Socket socket) {
@@ -141,30 +143,85 @@ public class HttpConnectionWorkerThread extends Thread {
         String host = hostParts[0];
         int port = hostParts.length > 1 ? Integer.parseInt(hostParts[1]) : 80; // Mặc định là cổng 80 cho HTTP
 
-        // Tạo kết nối tới remote server
-        try (Socket proxySocket = new Socket(host, port)) {
-            OutputStream proxyOutputStream = proxySocket.getOutputStream();
-            InputStream proxyInputStream = proxySocket.getInputStream();
+        String requestTarget = request.getRequestTarget();
 
-            // Tạo request HTTP hợp lệ để gửi tới remote server
-            StringBuilder httpRequest = new StringBuilder();
-            httpRequest.append(request.getMethod()).append(" ").append(request.getRequestTarget()).append(" ").append(request.getBestCompatibleHttpVersion().LITERAL).append("\r\n");
-
-            for (Map.Entry<String, String> header : request.getHeader().entrySet()) {
-                httpRequest.append(header.getKey()).append(": ").append(header.getValue()).append("\r\n");
+        boolean isCached = false;
+        if (requestTarget.endsWith(fileExtensionToCache) && RedisService.findKey(requestTarget)) {
+            byte[] data = RedisService.getBytesValue(requestTarget);
+            if (data != null) {
+                getDataAndResponse(requestTarget, clientOutputStream);
+                isCached = true;
             }
-            httpRequest.append("Connection: close\r\n"); // Đảm bảo kết nối được đóng sau khi nhận phản hồi
-            httpRequest.append("\r\n");
+        }
+        if (!isCached) {
+            // Tạo kết nối tới remote server
+            try (Socket proxySocket = new Socket(host, port)) {
+                OutputStream proxyOutputStream = proxySocket.getOutputStream();
+                InputStream proxyInputStream = proxySocket.getInputStream();
 
-            // Gửi request tới remote server
-            System.out.println("Request to remote server: " + httpRequest.toString());
-            proxyOutputStream.write(httpRequest.toString().getBytes());
-            proxyOutputStream.flush();
+                // Tạo request HTTP hợp lệ để gửi tới remote server
+                StringBuilder httpRequest = new StringBuilder();
+                httpRequest.append(request.getMethod()).append(" ").append(request.getRequestTarget()).append(" ").append(request.getBestCompatibleHttpVersion().LITERAL).append("\r\n");
 
-            // Gửi body tới remote server nếu có
-            // Chưa xử lý được trường hợp client thực hiện POST đăng nhập.
+                for (Map.Entry<String, String> header : request.getHeader().entrySet()) {
+                    httpRequest.append(header.getKey()).append(": ").append(header.getValue()).append("\r\n");
+                }
+                httpRequest.append("Connection: close\r\n"); // Đảm bảo kết nối được đóng sau khi nhận phản hồi
+                httpRequest.append("\r\n");
 
-            forwardData(proxyInputStream, clientOutputStream);
+                // Gửi request tới remote server
+                System.out.println("Request to remote server: " + httpRequest.toString());
+                proxyOutputStream.write(httpRequest.toString().getBytes());
+                proxyOutputStream.flush();
+
+                // Gửi body tới remote server nếu có
+                // Chưa xử lý được trường hợp client thực hiện POST đăng nhập.
+
+                /// Todo: Cache dữ liệu không thành công? Fix that.
+                if (requestTarget.endsWith(fileExtensionToCache)) {
+                    forwardDataAndCache(requestTarget, proxyInputStream, clientOutputStream);
+                } else {
+                    forwardData(proxyInputStream, clientOutputStream);
+                }
+            }
+        }
+    }
+
+    private void forwardDataAndCache(String requestTarget, InputStream proxyInputStream, OutputStream clientOutputStream) {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        byte[] buffer = new byte[4096];
+        int bytesRead;
+        try {
+            while ((bytesRead = proxyInputStream.read(buffer)) != -1) {
+                clientOutputStream.write(buffer, 0, bytesRead);
+                bos.write(buffer, 0, bytesRead);
+                clientOutputStream.flush(); // Đảm bảo dữ liệu đến client ngay lập tức
+            }
+            byte[] bytes = bos.toByteArray();
+            if (bytes.length > 0) {
+                RedisService.setBytesValue(requestTarget, bytes);
+            }
+        } catch (IOException e) {
+            logger.warning("Error forwarding data and caching: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            try {
+                bos.close();
+                clientOutputStream.close(); // Đảm bảo đóng luồng khi hoàn tất
+            } catch (IOException e) {
+                logger.warning("Error closing ByteArrayOutputStream: " + e.getMessage());
+            }
+        }
+    }
+
+    private void getDataAndResponse(String requestTarget, OutputStream clientOutputStream) {
+        byte[] data = RedisService.getBytesValue(requestTarget);
+        try {
+            clientOutputStream.write(data);
+            clientOutputStream.flush();
+            clientOutputStream.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

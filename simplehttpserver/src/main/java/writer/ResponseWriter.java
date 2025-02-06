@@ -1,12 +1,12 @@
 package writer;
 
 import config.HttpConfigurationAndResources;
-import http1.HttpMethod;
+import enums.HttpMethod;
 import http1.HttpRequest;
 import redis.RedisService;
-import util.Json;
-import util.ObjectResponse;
-import util.ResponseUtil;
+import utils.Json;
+import utils.ObjectResponse;
+import utils.ResponseUtil;
 
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
@@ -34,7 +34,7 @@ public class ResponseWriter {
                 boolean isRedisConnected = true;
                 try {
                     numbersRequestToTarget = RedisService.getNumberRequest(requestTarget);
-                } catch (Exception e) {      // In case: can not connect to redis server.
+                } catch (Exception e) {     // In case: can not connect to redis server.
                     isRedisConnected = false;
                 }
                 if (numbersRequestToTarget > NUMBER_REQUEST_TO_CACHE) {                                   // This resource is cached.

@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class StatisticResponse {
     public static void analysisResponse(OutputStream outputStream) {
@@ -106,7 +105,7 @@ public class StatisticResponse {
 
         Map<String, List<StatisticTarget>> analysisResponses = RedisService.getAllRequests();
         analysisResponses.keySet().stream().forEach(val -> {
-            List<StatisticTarget> listHostTargets = analysisResponses.get(val).stream().sorted().collect(Collectors.toList());
+            List<StatisticTarget> listHostTargets = analysisResponses.get(val).stream().sorted().toList();
             int size = listHostTargets.size();
             htmlBuilder.append("          <tr>\n");
             htmlBuilder.append("            <td rowspan=\" " + size + "\">" + getHostName(val) + "</td>\n");
